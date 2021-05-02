@@ -6,10 +6,6 @@ import {
     OrbitControls
 } from "three/examples/jsm/controls/OrbitControls.js";
 
-import {
-    ARButton
-} from './ARButton';
-
 var plyLoader = new PLYLoader();
 var container;
 var camera, XRcamera, gl, scene, controls, renderer, referenceSpace, hitTestSource;
@@ -60,20 +56,8 @@ function init() {
     controls.maxPolarAngle = Math.PI / 2;
     controls.target = new THREE.Vector3(0, 2, 0);
 
-    //
-    // var arButton = ARButton.createButton(renderer, {
-    //     requiredFeatures: ['local-floor', 'hit-test']
-    // });
-
     function onSelect(e) {
         console.log('onSelect()');
-        // if (renderer.xr.isPresenting) {
-        //     if (mainModel) {
-        //         mainModel.visible = true;
-        //         mainModel.position.copy(reticleModel.position);
-        //     }
-        // }
-
     }
 
     session = { requiredFeatures: ['local-floor', 'hit-test'] };
@@ -81,8 +65,6 @@ function init() {
     if ( session.domOverlay === undefined ) {
 
         overlay = document.querySelector( '.js-ar-overlay' );
-        // overlay.style.display = 'none';
-        // document.body.appendChild( overlay );
 
         if ( session.optionalFeatures === undefined ) {
 
@@ -119,9 +101,6 @@ function init() {
     scene.add(controller);
 
     loadBaseModel();
-
-    // renderer.xr.addEventListener('sessionstart', onSessionStarted);
-    // renderer.xr.addEventListener('sessionend', onSessionEnded);
 
     window.addEventListener('resize', onWindowResize, false);
     onWindowResize();
