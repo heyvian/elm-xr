@@ -107,6 +107,7 @@ function init() {
 }
 
 async function onSessionStarted(session) {
+    session.addEventListener( 'end', onSessionEnded );
     console.log('Session started: ', session);
     
     await renderer.xr.setSession( session );
@@ -147,7 +148,9 @@ async function onSessionStarted(session) {
 }
 
 async function onSessionEnded() {
+    currentSession.removeEventListener( 'end', onSessionEnded );
     currentSession = null;
+    
     if (initialModel) {
         initialModel.visible = true;
     }
