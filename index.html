@@ -1,14 +1,13 @@
 <!doctype html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <title>WebXR | Preserved Elm</title>
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600&family=Montserrat:wght@400;600;800&display=swap"
-        rel="stylesheet">
+    <title>Digitally Preserved Elm - WebXR Experiment</title>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="dist/css/main.min.css" rel="stylesheet" type="text/css" media="screen" />
 
     <!-- Favicons -->
@@ -22,14 +21,39 @@
 </head>
 
 <body>
+    <button class="c-menu-trigger o-btn o-btn--small o-btn--primary js-info-panel-toggle" aria-label="Open more info panel">info</button>
+    <div class="c-menu-wrapper js-info-panel">
+        <div class="c-menu">
+            <p class="c-menu__title">What is this?</p>
+            <p class="c-menu__blurb">
+                It was a way for me to learn something new but also I liked the idea of sharing this approximately <a href="https://alberta.preserve.ucalgary.ca/sites/stampede-elm/" target="_blank" rel="nofollow">125 year old Elm</a> with people who can't see it in person.
+            </p>
+            <p class="c-menu__title">Why does it look so magical?</p>
+            <p class="c-menu__blurb">
+                Well, this Elm was scanned using Terrestrial LiDAR in the middle of winter when it had no leaves. The scanning works by mapping the tree with lasers and then matching those points up to photos for colour data. The laser points on the finer brances likely ended up getting mapped to sky colours from the photo as the branches moved out of place in the wind. It's kinda beautiful though.
+            </p>
+            <p class="c-menu__title">Why does it look so blocky?</p>
+            <p class="c-menu__blurb">
+                The original scan is immensly more detailed at nearly 275 million points, but also at over 5GB. This was my best effort at finding a compromise for the web at only 230 thousand points and 7MB.
+            </p>
+            <p class="c-menu__title">Is your device supported?</p>
+            <p class="c-menu__blurb">
+                <span class="js-device-support-blurb-supported">Looks like your device is supported! Go ahead and click the "Place Elm" button to get started.</span>
+                <span class="js-device-support-blurb-not-supported">Looks like your device is not supported ... WebXR is still pretty new. Maybe you device will be supported in the future. A good place to start is 'Chrome' on Android or 'WebXR Viewer' on iOS.</span>
+            </p>
+        </div>
+    </div>
     <div class="c-info">
         <h1 class="c-info__title">Elm Tree</h1>
         <p class="c-info__blurb">See this 125 year old Elm in your environment using WebXR.</p>
         <button class="c-info__btn o-btn o-btn--primary js-start-webxr">Enter Mixed Reality</button>
     </div>
-    <div class="c-immersive-ar"></div>
-    <div class="c-ar-overlay"></div>
-    <script type="module" src="dist/js/refactor2.js"></script>
+    <div class="c-immersive-ar js-ar-container"></div>
+    <div class="c-ar-overlay js-ar-overlay">
+        <button class="c-ar-overlay__close-btn js-close-webxr" aria-label="Close AR session"></button>
+        <button class="c-ar-overlay__plant-btn o-btn o-btn--primary js-place-elm">Place Elm</button>
+    </div>
+    <script type="module" src="dist/js/elm-xr.js"></script>
 </body>
 
 </html>

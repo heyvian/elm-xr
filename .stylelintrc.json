@@ -42,8 +42,8 @@
       }],
       "selector-list-comma-space-after": "always-single-line",
       "selector-list-comma-newline-before": "never-multi-line",
-      "rule-empty-line-before": ["never", {
-        "except": ["after-rule", "first-nested"],
+      "rule-empty-line-before": ["always-multi-line", {
+        "except": ["after-single-line-comment", "first-nested"],
         "ignore": ["first-nested"]
       }],
       "media-feature-colon-space-after": "always",
