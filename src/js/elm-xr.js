@@ -2,207 +2,307 @@ import * as THREE from 'three';
 import {
     PLYLoader
 } from 'three/examples/jsm/loaders/PLYLoader';
+import {
+    OrbitControls
+} from "three/examples/jsm/controls/OrbitControls.js";
 
-let elmTreeXR = {};
 
-function showARNotSupported() {
-    startARbutton.setAttribute('disabled', 'disabled');
-    startARbutton.classList.add('is-disabled');
-    startARbutton.textContent = "Mixed reality not supported";
-}
+
+import {
+    ARButton
+} from './ARButton';
+
+var container;
+var camera, XRcamera, gl, scene, controls, renderer, session, referenceSpace, hitTestSource;
+var controller;
+var plyLoader = new PLYLoader();
+var initialModel, reticleModel, mainModel, baseModel;
+
+init();
+animate();
 
 function init() {
-    
-    window.addEventListener( 'resize', onWindowResize, false );
+
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(45, window.innerHeight / window.innerWidth, 1, 200);
+
+    setInitialCameraPosition();
+
+    var light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+    light.position.set(0.5, 1, 0.25);
+    scene.add(light);
+
+    renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(document.body.clientWidth, document.body.clientHeight);
+    renderer.xr.enabled = true;
+    container.appendChild(renderer.domElement);
+    // gl = renderer.domElement.getContext("webgl", {
+    //     xrCompatible: true
+    // });
+    // gl.enable(gl.DEPTH_TEST); // Enable depth testing
+    // gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.25;
+    controls.enablePan = false;
+    controls.maxPolarAngle = Math.PI / 2;
+    controls.target = new THREE.Vector3(0, 3, 0);
+
+    //
+    var arButton = ARButton.createButton(renderer, {
+        requiredFeatures: ['local-floor', 'hit-test']
+    });
+
+    function onSelect(e) {
+        console.log('onSelect()');
+        if (renderer.xr.isPresenting) {
+            if (mainModel) {
+                mainModel.visible = true;
+                mainModel.position.copy(reticleModel.position);
+            }
+        }
+
+    }
+
+    controller = renderer.xr.getController(0);
+    controller.addEventListener('select', onSelect);
+    scene.add(controller);
+
+    // loadInitialModel();
+    // loadReticleModel();
+    loadBaseModel();
+
+    renderer.xr.addEventListener('sessionstart', onSessionStarted);
+    renderer.xr.addEventListener('sessionend', onSessionEnded);
+
+    window.addEventListener('resize', onWindowResize, false);
+    onWindowResize();
+}
+
+async function onSessionStarted(e) {
+    const thisXR = e.target;
+    XRcamera = new THREE.PerspectiveCamera();
+    XRcamera.matrixAutoUpdate = false;
+
+    // loadMainModel();
+    if(!mainModel) {
+        setMainModel();
+    }
+
+    if (initialModel) {
+        initialModel.visible = false;
+    }
+    if (reticleModel) {
+        scene.add(reticleModel);
+        reticleModel.visible = true;
+    }
+
+    session = thisXR.getSession();
+
+    // A 'local' reference space has a native origin that is located
+    // near the viewer's position at the time the session was created.
+    referenceSpace = await session.requestReferenceSpace("local-floor").catch(e => {
+        console.log(e)
+    });
+
+    // Create another XRReferenceSpace that has the viewer as the origin.
+    const viewerSpace = await session.requestReferenceSpace('viewer').catch(e => {
+        console.log(e)
+    });
+    // Perform hit testing using the viewer as origin.
+    hitTestSource = await session.requestHitTestSource({
+        space: viewerSpace
+    }).catch(e => {
+        console.log(e)
+    });
+}
+
+async function onSessionEnded(e) {
+    if (initialModel) {
+        initialModel.visible = true;
+    }
+    if (reticleModel) {
+        scene.add(reticleModel);
+        reticleModel.visible = false;
+    }
+    if (mainModel) {
+        mainModel.visible = false;
+    }
 }
 
 function onWindowResize() {
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+    if (!renderer.xr.isPresenting) {
+        camera.aspect = document.body.clientWidth / document.body.clientHeight;
+        camera.updateProjectionMatrix();
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
-}
-
-function initThreeJS() {
-
-    elmTreeXR.canvas = document.querySelector('.canvas');
-    elmTreeXR.scene = new THREE.Scene();
-
-    elmTreeXR.gl = elmTreeXR.canvas.getContext("webgl", {
-        xrCompatible: true
-    });
-    elmTreeXR.gl.enable(elmTreeXR.gl.DEPTH_TEST);           // Enable depth testing
-    elmTreeXR.gl.depthFunc(elmTreeXR.gl.LEQUAL);            // Near things obscure far things
-    
-    // Set up the WebGLRenderer, which handles rendering to the session's base layer.
-    elmTreeXR.renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        preserveDrawingBuffer: true,
-        canvas:  elmTreeXR.canvas,
-        context: elmTreeXR.gl
-    });
-
-
-    // Camera
-    const width = 10;
-    const height = width * (window.innerHeight / window.innerWidth);
-    elmTreeXR.camera = new THREE.OrthographicCamera(
-        width / -2, // left
-        width / 2, // right
-        height / 2, // top
-        height / -2, // bottom
-        1, // near
-        100 // far
-    );
-
-    elmTreeXR.camera.position.set(4, 1, 4);
-    elmTreeXR.camera.lookAt(0, 0, 0);
-
-    elmTreeXR.renderer.setSize(window.innerWidth, window.innerHeight);
-    elmTreeXR.renderer.render(elmTreeXR.scene, elmTreeXR.camera);
-
-    // Add it to HTML
-    document.body.appendChild(elmTreeXR.renderer.domElement);
-}
-
-initThreeJS();
-
-const plyLoader = new PLYLoader();
-
-plyLoader.load('dist/models/home-elm.ply', obj => {
-    obj.center();
-    obj.rotateX(THREE.Math.degToRad(-90));
-    obj.translate(-1, obj.boundingBox.max.y, 0);
-
-    const mainElmPointCloud = new THREE.Points(obj, new THREE.PointsMaterial({
-        vertexColors: THREE.VertexColors,
-        size: 2.4
-    }));
-
-    mainElmPointCloud.position.set(0, -3, 0);
-
-    const elmTree = mainElmPointCloud;
-    elmTreeXR.scene.add(elmTree);
-    elmTreeXR.renderer.render(elmTreeXR.scene, elmTreeXR.camera);
-    console.log('Home model loaded');
-});
-
-async function activateXR() {
-
-    while(elmTreeXR.scene.children.length > 0){ 
-        elmTreeXR.scene.remove(elmTreeXR.scene.children[0]); 
+        renderer.setSize(document.body.clientWidth, document.body.clientHeight);
     }
 
-    elmTreeXR.renderer.setClearColor( 0xffffff, 0);
-    elmTreeXR.renderer.autoClear = false;
+}
 
-    // The API directly updates the camera matrices.
-    // Disable matrix auto updates so three.js doesn't attempt
-    // to handle the matrices independently.
-    const camera = new THREE.PerspectiveCamera();
-    camera.matrixAutoUpdate = false;
+function animate() {
+    renderer.setAnimationLoop(render);
+}
 
-    // Initialize a WebXR session using "immersive-ar".
-    const session = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ['hit-test'] });
-    session.updateRenderState({
-        baseLayer: new XRWebGLLayer(session, elmTreeXR.gl)
-    });
-
-    // A 'local' reference space has a native origin that is located
-    // near the viewer's position at the time the session was created.
-    const referenceSpace = await session.requestReferenceSpace("local");
-
-    // Create another XRReferenceSpace that has the viewer as the origin.
-    const viewerSpace = await session.requestReferenceSpace('viewer');
-    // Perform hit testing using the viewer as origin.
-    const hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
-
-    let reticle;
-    let elmTree;   
-
-    plyLoader.load('dist/models/recticle.ply', obj => {
-        obj.center();
-        obj.rotateX(THREE.Math.degToRad(-90));
-
-        const elmTreePointCloud = new THREE.Points(obj, new THREE.PointsMaterial({
-            vertexColors: THREE.VertexColors,
-            size: 0.002,
-            opacity: 0.65
-        }));
-
-        reticle = elmTreePointCloud;
-        reticle.visible = false;
-        elmTreeXR.scene.add(reticle);
-        console.log('Reticle model loaded');
-    });
-
-    plyLoader.load('dist/models/elm.ply', obj => {
-        obj.center();
-        obj.rotateX(THREE.Math.degToRad(-90));
-        obj.translate(0, obj.boundingBox.max.y, 1);
-
-        const pointCloud = new THREE.Points(obj, new THREE.PointsMaterial({
-            vertexColors: THREE.VertexColors,
-            size: 0.025
-        }));
-
-        // pointCloud.scale.set(0.1,0.1,0.1);
-
-        elmTree = pointCloud;
-        elmTree.position.copy(reticle.position);
-        elmTree.visible = false;
-        elmTreeXR.scene.add(elmTree);
-        console.log('Main model loaded');
-    });
-
-    session.addEventListener("select", (event) => {
-        console.log(event, event.inputSource); 
-        if (elmTree) {
-            elmTree.visible = true;
-            elmTree.position.copy(reticle.position);
-        }
-    });
-
-    // Create a render loop that allows us to draw on the AR view.
-    const onXRFrame = (time, frame) => {
-        // Queue up the next draw request.
-        session.requestAnimationFrame(onXRFrame);
-
-        // Bind the graphics framebuffer to the baseLayer's framebuffer
-        elmTreeXR.gl.bindFramebuffer(
-            elmTreeXR.gl.FRAMEBUFFER,
-            session.renderState.baseLayer.framebuffer
-        );
-
-        // Retrieve the pose of the device.
-        // XRFrame.getViewerPose can return null while the session attempts to establish tracking.
+function render(time, frame) {
+    // console.log(renderer);
+    if (renderer.xr.isPresenting) {
         const pose = frame.getViewerPose(referenceSpace);
         if (pose) {
             // In mobile AR, we only have one view.
             const view = pose.views[0];
 
-            const viewport = session.renderState.baseLayer.getViewport(view);
-            elmTreeXR.renderer.setSize(viewport.width, viewport.height);
-
             // Use the view's transform matrix and projection matrix to configure the THREE.camera.
-            camera.matrix.fromArray(view.transform.matrix);
-            camera.projectionMatrix.fromArray(view.projectionMatrix); 
-            camera.updateMatrixWorld(true);
+            XRcamera.matrix.fromArray(view.transform.matrix);
+            XRcamera.projectionMatrix.fromArray(view.projectionMatrix);
+            XRcamera.updateMatrixWorld(true);
 
             const hitTestResults = frame.getHitTestResults(hitTestSource);
-            if (hitTestResults.length > 0 && reticle) {
+
+            reticleModel.visible = false;
+
+            if (hitTestResults.length > 0 && reticleModel) {
                 const hitPose = hitTestResults[0].getPose(referenceSpace);
-                reticle.visible = true;
-                reticle.position.set(hitPose.transform.position.x, hitPose.transform.position.y, hitPose.transform.position.z)
-                reticle.updateMatrixWorld(true);
+                reticleModel.visible = true;
+                reticleModel.position.set(hitPose.transform.position.x, hitPose.transform.position.y, hitPose.transform.position.z);
+                // For wall detection to change angle
+                // reticleModel.rotation.set(hitPose.transform.orientation.x, hitPose.transform.orientation.y, hitPose.transform.orientation.z);
+                reticleModel.updateMatrixWorld(true);
             }
 
             // Render the scene with THREE.WebGLRenderer.
-            elmTreeXR.renderer.render(elmTreeXR.scene, camera);
+            renderer.render(scene, XRcamera);
         }
-    };
-    session.requestAnimationFrame(onXRFrame);
+    } else {
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+}
+
+function loadBaseModel() {
+    plyLoader.load('dist/models/base.ply', obj => {
+        baseModel = obj.clone();
+        baseModel.center();
+        baseModel.rotateX(THREE.Math.degToRad(-90));
+        console.log('Base model loaded');
+        setHomeModel();
+        setReticleModel();
+    });
+}
+
+function setHomeModel() {
+    var homeObj = baseModel.clone();
+    // homeObj.rotateX(THREE.Math.degToRad(-90));
+    homeObj.translate(0, homeObj.boundingBox.max.y, 1.25);
+
+    initialModel = new THREE.Points(homeObj, new THREE.PointsMaterial({
+        vertexColors: THREE.VertexColors,
+        size: 0.12
+    }));
+
+    scene.add(initialModel);
+    console.log('Home model set');
+}
+
+function setReticleModel() {
+    var reticleObj = baseModel.clone();
+    // reticleObj.center();
+    // reticleObj.rotateX(THREE.Math.degToRad(-90));
+    const scale = 0.035;
+    reticleObj.scale(scale, scale, scale);
+    // obj.translate(0,1, -1);
+
+    reticleModel = new THREE.Points(reticleObj, new THREE.PointsMaterial({
+        vertexColors: THREE.VertexColors,
+        size: 0.011,
+        opacity: 0.5
+    }));
+
+    // scene.add(reticleModel);
+    console.log('Reticle model set');
+}
+
+function setMainModel() {
+    var mainObj = baseModel.clone();
+    // mainObj.center();
+    // mainObj.rotateX(THREE.Math.degToRad(-90));
+    mainObj.translate(0, mainObj.boundingBox.max.y * 0.99, 1);
+
+    mainModel = new THREE.Points(mainObj, new THREE.PointsMaterial({
+        vertexColors: THREE.VertexColors,
+        size: 0.085
+    }));
+
+    mainModel.position.copy(reticleModel.position);
+    mainModel.visible = false;
+
+    scene.add(mainModel);
+    console.log('Main model set');
+}
+
+function loadInitialModel() {
+    plyLoader.load('dist/models/home-elm.ply', obj => {
+        // obj.center();
+        // obj.rotateX(THREE.Math.degToRad(-90));
+        obj.translate(0, obj.boundingBox.max.y, 1.25);
+
+        initialModel = new THREE.Points(obj, new THREE.PointsMaterial({
+            vertexColors: THREE.VertexColors,
+            size: 0.12
+        }));
+
+        initialModel.position.set(0, 0, 0);
+
+        scene.add(initialModel);
+        console.log('Home model loaded');
+    });
+}
+
+function loadReticleModel() {
+    plyLoader.load('dist/models/reticle.ply', obj => {
+        obj.center();
+        obj.rotateX(THREE.Math.degToRad(-90));
+        // obj.translate(0,1, -1);
+
+        reticleModel = new THREE.Points(obj, new THREE.PointsMaterial({
+            vertexColors: THREE.VertexColors,
+            size: 0.02,
+            opacity: 0.65
+        }));
+
+        // scene.add(reticleModel);
+        console.log('Reticle model loaded');
+    });
+}
+
+function loadMainModel() {
+    plyLoader.load('dist/models/home-elm.ply', obj => {
+        obj.center();
+        obj.rotateX(THREE.Math.degToRad(-90));
+        obj.translate(0, obj.boundingBox.max.y - 0.2, 1);
+
+        mainModel = new THREE.Points(obj, new THREE.PointsMaterial({
+            vertexColors: THREE.VertexColors,
+            size: 0.085
+        }));
+
+        mainModel.position.copy(reticleModel.position);
+        mainModel.visible = false;
+        scene.add(mainModel);
+        console.log('Main model loaded');
+    });
+}
+
+function setInitialCameraPosition() {
+    camera.position.set(0, 1.5, -24);
 }
