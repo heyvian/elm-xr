@@ -1,5 +1,5 @@
 # Elm XR
-WebXR experiments using digitally preserved Elm tree. The ~125 year old Elm tree in Calgary, Alberta is set to be removed for new construction and was digitally preserved using 3D scanning LiDAR technology. I decided to use the scans to learn WebXR.
+WebXR experiments using digitally preserved Elm tree. The [~125 year old Elm tree in Calgary, Alberta](https://www.cbc.ca/news/canada/calgary/calgary-stampede-elm-fate-tree-digital-preservation-1.6008513) is set to be removed for new construction and was digitally preserved using 3D scanning LiDAR technology. I decided to use the scans to learn WebXR.
 
 Data created and provided by [capture2preserve](https://alberta.preserve.ucalgary.ca/sites/stampede-elm/), modified by me using [CloudCompare](https://www.danielgm.net/cc/) for web use.
 
