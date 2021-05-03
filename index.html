@@ -20,13 +20,13 @@
     <meta name="theme-color" content="#ffffff">
 </head>
 
-<body>
+<body class="not-models-ready">
     <button class="c-menu-trigger o-btn o-btn--small o-btn--primary js-info-panel-toggle" aria-label="Open more info panel">info</button>
     <div class="c-menu-wrapper js-info-panel">
         <div class="c-menu">
             <p class="c-menu__title">What is this?</p>
             <p class="c-menu__blurb">
-                It was a way for me to learn something new but also I liked the idea of sharing this approximately <a href="https://alberta.preserve.ucalgary.ca/sites/stampede-elm/" target="_blank" rel="nofollow">125 year old Elm</a> with people who can't see it in person.
+                This is a way for me to learn something new but also I liked the idea of sharing this approximately <a href="https://alberta.preserve.ucalgary.ca/sites/stampede-elm/" target="_blank" rel="nofollow">125 year old Elm</a> with people who can't see it in person.
             </p>
             <p class="c-menu__title">Why does it look so magical?</p>
             <p class="c-menu__blurb">
@@ -34,22 +34,34 @@
             </p>
             <p class="c-menu__title">Why does it look so blocky?</p>
             <p class="c-menu__blurb">
-                The original scan is immensly more detailed at nearly 275 million points, but also at over 5GB. This was my best effort at finding a compromise for the web at only 230 thousand points and 7MB.
+                The original scan is immensly more detailed at nearly 275 million points, making the file over 5GB. This was my best effort at finding a compromise for the web at only 230 thousand points and 7MB.
             </p>
             <p class="c-menu__title">Is your device supported?</p>
             <p class="c-menu__blurb">
                 <span class="js-device-support-blurb-supported">Looks like your device is supported! Go ahead and click the "Place Elm" button to get started.</span>
-                <span class="js-device-support-blurb-not-supported">Looks like your device is not supported ... WebXR is still pretty new. Maybe you device will be supported in the future. A good place to start is 'Chrome' on Android or 'WebXR Viewer' on iOS.</span>
+                <span class="js-device-support-blurb-not-supported">Looks like your device is not supported ... WebXR is still pretty new. Maybe you device will be supported in the future. A good place to start is <a href="https://play.google.com/store/apps/details?id=com.android.chrome" target="_blank" rel="nofollow">'Chrome' on Android</a> or <a href="https://apps.apple.com/us/app/webxr-viewer/id1295998056" target="_blank" rel="nofollow">'WebXR Viewer' on iOS</a>.</span>
+            </p>
+            <p class="c-menu__title">Where is it?</p>
+            <p class="c-menu__blurb">
+                It's in the middle of a parking lot in <a href="https://www.google.com/maps/@51.040585,-114.0522997,76m/data=!3m1!1e3" target="_blank" rel="nofollow">Calgary, Alberta, Canada</a>.                
+            </p>
+            <p class="c-menu__title">Gratitude!</p>
+            <p class="c-menu__blurb">
+                Really big thanks to Madisen Hvidberg for answering my many questions and the <a href="https://alberta.preserve.ucalgary.ca/" target="_blank" rel="nofollow">Capture2Preserve</a> team for the data.</a>.                
             </p>
         </div>
     </div>
     <div class="c-info">
         <h1 class="c-info__title">Elm Tree</h1>
         <p class="c-info__blurb">See this 125 year old Elm in your environment using WebXR.</p>
-        <button class="c-info__btn o-btn o-btn--primary js-start-webxr">Enter Mixed Reality</button>
+        <button class="c-info__btn o-btn o-btn--primary js-start-webxr not-models-ready">Enter Mixed Reality</button>
     </div>
     <div class="c-immersive-ar js-ar-container"></div>
     <div class="c-ar-overlay js-ar-overlay">
+        <div class="js-scale-slider-wrapper">
+            <div class="c-ar-overlay__scale-legend"><span class="js-scale-factor"></span> scale</div>
+            <input type="range" min="1" max="100" value="3.5" class="c-ar-overlay__scale-slider js-scale-slider">
+        </div>
         <button class="c-ar-overlay__close-btn js-close-webxr" aria-label="Close AR session"></button>
         <button class="c-ar-overlay__plant-btn o-btn o-btn--primary js-place-elm">Place Elm</button>
     </div>

@@ -47,7 +47,7 @@ module.exports = function(dirs, helpers){
                         })
                         .on('error', sass.logError)
                     )
-                    .on('error', error => helpers.notifyError(error, 'error'))
+                    // .on('error', error => helpers.notifyError(error, 'error')) 
                     // automatically insert vendor prefixes
                     .pipe(
                         autoprefixer({
@@ -64,21 +64,21 @@ module.exports = function(dirs, helpers){
                     .pipe(rename(rename => rename.extname = '.min.css'))
                     .pipe(gulp.dest(path.output))
                     // show success notification
-                    .pipe(notify({
-                        title: 'File Compiled',
-                        message: '<%= file.relative %>'
-                    }));
+                    // .pipe(notify({
+                    //     title: 'File Compiled',
+                    //     message: '<%= file.relative %>'
+                    // }));
 
                 processes.add(process);
             });
             // ignore errors on merged stream (should be handled in individual stream)
             processes.on('error', error => {});
             // show success notification
-            processes.pipe(notify({
-                title: 'Compiling Complete',
-                message: 'All files compiled',
-                onLast: true
-            }));
+            // processes.pipe(notify({
+            //     title: 'Compiling Complete',
+            //     message: 'All files compiled',
+            //     onLast: true
+            // }));
         },
 
         lint: function(){
@@ -94,7 +94,7 @@ module.exports = function(dirs, helpers){
                         ]
                     }))
                     // show warning notification
-                    .on('error', error => helpers.notifyError(error, 'warning', 'There are lint errors that require your attention'));
+                    // .on('error', error => helpers.notifyError(error, 'warning', 'There are lint errors that require your attention'));
 
                 processes.add(process);
             });

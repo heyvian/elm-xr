@@ -13,11 +13,17 @@ var session;
 var currentSession = null;
 var controller;
 var initialModel, reticleModel, mainModel, baseModel;
+var treeScale = 3.5;
+var mainModelPointSize = 0.085;
+var elmPlaced = false;
 
-var overlay = document.querySelector( '.js-ar-overlay' );
+var overlay = document.querySelector('.js-ar-overlay');
 var startARbtn = document.querySelector('.js-start-webxr');
 var closeARbtn = document.querySelector('.js-close-webxr');
 var placeElmBtn = document.querySelector('.js-place-elm');
+var scaleFactorTest = document.querySelector('.js-scale-factor');
+var scaleSliderWrapper = document.querySelector('.js-scale-slider-wrapper');
+var scaleSlider = document.querySelector('.js-scale-slider');
 
 init();
 animate();
@@ -60,26 +66,30 @@ function init() {
         console.log('onSelect()');
     }
 
-    session = { requiredFeatures: ['local-floor', 'hit-test'] };
+    session = {
+        requiredFeatures: ['local-floor', 'hit-test']
+    };
 
-    if ( session.domOverlay === undefined ) {
+    if (session.domOverlay === undefined) {
 
-        overlay = document.querySelector( '.js-ar-overlay' );
+        overlay = document.querySelector('.js-ar-overlay');
 
-        if ( session.optionalFeatures === undefined ) {
+        if (session.optionalFeatures === undefined) {
 
             session.optionalFeatures = [];
 
         }
 
-        session.optionalFeatures.push( 'dom-overlay' );
-        session.domOverlay = { root: overlay };
+        session.optionalFeatures.push('dom-overlay');
+        session.domOverlay = {
+            root: overlay
+        };
 
     }
 
     startARbtn.addEventListener('click', e => {
-        if ( currentSession === null ) {
-            navigator.xr.requestSession( 'immersive-ar', session ).then( onSessionStarted );
+        if (currentSession === null) {
+            navigator.xr.requestSession('immersive-ar', session).then(onSessionStarted);
         }
     });
 
@@ -89,12 +99,26 @@ function init() {
 
     placeElmBtn.addEventListener('click', e => {
         if (renderer.xr.isPresenting) {
-            if (mainModel) {
+            if (mainModel && !elmPlaced) {
                 mainModel.visible = true;
                 mainModel.position.copy(reticleModel.position);
+                elmPlaced = true;
+            } else if (mainModel && elmPlaced) {
+                mainModel.visible = false;
+                elmPlaced = false;
             }
         }
     });
+
+    var ratio = calculateRatio(treeScale, 100);
+    scaleFactorTest.textContent = ratio;
+
+    scaleSlider.addEventListener('input', e => {
+        treeScale = e.target.value;
+        ratio = calculateRatio(e.target.value, 100);
+
+        scaleFactorTest.textContent = ratio;
+    })
 
     controller = renderer.xr.getController(0);
     controller.addEventListener('select', onSelect);
@@ -107,16 +131,16 @@ function init() {
 }
 
 async function onSessionStarted(session) {
-    session.addEventListener( 'end', onSessionEnded );
+    session.addEventListener('end', onSessionEnded);
     console.log('Session started: ', session);
-    
-    await renderer.xr.setSession( session );
+
+    await renderer.xr.setSession(session);
     currentSession = session;
 
     XRcamera = new THREE.PerspectiveCamera();
     XRcamera.matrixAutoUpdate = false;
 
-    if(!mainModel) {
+    if (!mainModel) {
         setMainModel();
     }
     if (initialModel) {
@@ -137,6 +161,7 @@ async function onSessionStarted(session) {
     const viewerSpace = await currentSession.requestReferenceSpace('viewer').catch(e => {
         console.log(e)
     });
+
     // Perform hit testing using the viewer as origin.
     hitTestSource = await currentSession.requestHitTestSource({
         space: viewerSpace
@@ -148,9 +173,9 @@ async function onSessionStarted(session) {
 }
 
 async function onSessionEnded() {
-    currentSession.removeEventListener( 'end', onSessionEnded );
+    currentSession.removeEventListener('end', onSessionEnded);
     currentSession = null;
-    
+
     if (initialModel) {
         initialModel.visible = true;
     }
@@ -186,13 +211,39 @@ function render(time, frame) {
 
             reticleModel.visible = false;
 
+            var mainModelScale = treeScale / 100;
+            var updatedMainModelPointSize = mainModelPointSize * mainModelScale;
+            mainModel.material.size = updatedMainModelPointSize;
+
+            mainModel.scale.set(mainModelScale, mainModelScale, mainModelScale);
+
+            var reticleModelScale = treeScale / 100;
+            var updatedReticleModelPointSize = mainModelPointSize * reticleModelScale;
+            reticleModel.material.size = updatedReticleModelPointSize;
+
+            reticleModel.scale.set(reticleModelScale, reticleModelScale, reticleModelScale);
+
             if (hitTestResults.length > 0 && reticleModel) {
                 const hitPose = hitTestResults[0].getPose(referenceSpace);
-                reticleModel.visible = true;
+                if (!elmPlaced) {
+                    reticleModel.visible = true;
+                    placeElmBtn.textContent = "Place Elm";
+                } else {
+                    reticleModel.visible = false;
+                    placeElmBtn.textContent = "Remove Elm";
+                    placeElmBtn.classList.add('is-remove');
+                }
                 reticleModel.position.set(hitPose.transform.position.x, hitPose.transform.position.y, hitPose.transform.position.z);
                 // For wall detection to change angle
                 // reticleModel.rotation.set(hitPose.transform.orientation.x, hitPose.transform.orientation.y, hitPose.transform.orientation.z);
                 reticleModel.updateMatrixWorld(true);
+
+                scaleSliderWrapper.classList.add('has-hitpose');
+                placeElmBtn.classList.add('has-hitpose');
+            } else {
+                scaleSliderWrapper.classList.remove('has-hitpose');
+                placeElmBtn.classList.remove('has-hitpose');
+                placeElmBtn.textContent = "Move your phone to map the floor";
             }
 
             // Render the scene with THREE.WebGLRenderer.
@@ -213,6 +264,8 @@ function loadBaseModel() {
         console.log('Base model loaded');
         setHomeModel();
         setReticleModel();
+        startARbtn.classList.remove('not-models-ready');
+        document.body.classList.remove('not-models-ready');
     });
 }
 
@@ -231,12 +284,14 @@ function setHomeModel() {
 
 function setReticleModel() {
     var reticleObj = baseModel.clone();
-    const scale = 0.035;
-    reticleObj.scale(scale, scale, scale);
+    // const scale = 0.035;
+    // reticleObj.scale(scale, scale, scale);
+    // reticleObj.translate(0, reticleObj.boundingBox.max.y * 0.99, 1);
+    reticleObj.translate(0, reticleObj.boundingBox.max.y * 0.99, 0.5);
 
     reticleModel = new THREE.Points(reticleObj, new THREE.PointsMaterial({
         vertexColors: THREE.VertexColors,
-        size: 0.011,
+        size: mainModelPointSize,
         opacity: 0.5
     }));
 
@@ -250,7 +305,7 @@ function setMainModel() {
 
     mainModel = new THREE.Points(mainObj, new THREE.PointsMaterial({
         vertexColors: THREE.VertexColors,
-        size: 0.085
+        size: mainModelPointSize
     }));
 
     mainModel.position.copy(reticleModel.position);
@@ -272,4 +327,15 @@ function onWindowResize() {
 
 function setInitialCameraPosition() {
     camera.position.set(0, 1.5, -24);
+}
+
+function calculateRatio(num_1, num_2) {
+    for (let num = num_2; num > 1; num--) {
+        if ((num_1 % num) == 0 && (num_2 % num) == 0) {
+            num_1 = num_1 / num;
+            num_2 = num_2 / num;
+        }
+    }
+    var ratio = num_1 + ":" + num_2;
+    return ratio;
 }
