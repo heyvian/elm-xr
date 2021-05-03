@@ -5,11 +5,17 @@ const supportedBlurb = document.querySelector('.js-device-support-blurb-supporte
 const notSupportedBlurb = document.querySelector('.js-device-support-blurb-not-supported');
 const startARbtn = document.querySelector('.js-start-webxr');
 
-navigator.xr.isSessionSupported( 'immersive-ar' ).then( function ( supported ) {
+if(navigator.xr) {
+    navigator.xr.isSessionSupported( 'immersive-ar' ).then( function ( supported ) {
 
-    supported ? showSupportedBlurb() : showNotSupportedBlurb();
-
-} ).catch( showNotSupportedBlurb );
+        supported ? showSupportedBlurb() : showNotSupportedBlurb();
+    
+    } ).catch( showNotSupportedBlurb );
+} else {
+    startARbtn.textContent = "Your device does not support AR";
+    startARbtn.classList.add('is-disabled');
+    startARbtn.setAttribute('disabled', 'disabled');
+}
 
 function showSupportedBlurb() {
     supportedBlurb.classList.add('is-visible');
