@@ -287,7 +287,7 @@ function setReticleModel() {
     // const scale = 0.035;
     // reticleObj.scale(scale, scale, scale);
     // reticleObj.translate(0, reticleObj.boundingBox.max.y * 0.99, 1);
-    reticleObj.translate(0, reticleObj.boundingBox.max.y * 0.99, 0.5);
+    reticleObj.translate(0, reticleObj.boundingBox.max.y, 0.5);
 
     reticleModel = new THREE.Points(reticleObj, new THREE.PointsMaterial({
         vertexColors: THREE.VertexColors,
@@ -301,7 +301,7 @@ function setReticleModel() {
 
 function setMainModel() {
     var mainObj = baseModel.clone();
-    mainObj.translate(0, mainObj.boundingBox.max.y * 0.99, 1);
+    mainObj.translate(0, mainObj.boundingBox.max.y, 1);
 
     mainModel = new THREE.Points(mainObj, new THREE.PointsMaterial({
         vertexColors: THREE.VertexColors,

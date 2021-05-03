@@ -3,6 +3,7 @@ const togglePanelBtn = document.querySelector('.js-info-panel-toggle');
 const infoPanel = document.querySelector('.js-info-panel');
 const supportedBlurb = document.querySelector('.js-device-support-blurb-supported');
 const notSupportedBlurb = document.querySelector('.js-device-support-blurb-not-supported');
+const startARbtn = document.querySelector('.js-start-webxr');
 
 navigator.xr.isSessionSupported( 'immersive-ar' ).then( function ( supported ) {
 
@@ -22,6 +23,9 @@ function showNotSupportedBlurb() {
     supportedBlurb.setAttribute('aria-hidden', 'true');
     notSupportedBlurb.classList.add('is-visible');
     notSupportedBlurb.setAttribute('aria-hidden', 'false');
+    startARbtn.textContent = "Your device does not support AR";
+    startARbtn.classList.add('is-disabled');
+    startARbtn.setAttribute('disabled', 'disabled');
 }
 
 function togglePanel() {
