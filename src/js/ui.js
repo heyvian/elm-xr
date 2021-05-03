@@ -12,9 +12,7 @@ if(navigator.xr) {
     
     } ).catch( showNotSupportedBlurb );
 } else {
-    startARbtn.textContent = "Your device does not support AR";
-    startARbtn.classList.add('is-disabled');
-    startARbtn.setAttribute('disabled', 'disabled');
+    showNotSupportedBlurb();
 }
 
 function showSupportedBlurb() {
