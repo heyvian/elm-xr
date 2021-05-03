@@ -87,17 +87,17 @@ function init() {
 
     }
 
-    startARbtn.addEventListener('click', e => {
+    startARbtn.addEventListener('click', function(e) {
         if (currentSession === null) {
             navigator.xr.requestSession('immersive-ar', session).then(onSessionStarted);
         }
     });
 
-    closeARbtn.addEventListener('click', e => {
+    closeARbtn.addEventListener('click', function(e) {
         currentSession.end();
     });
 
-    placeElmBtn.addEventListener('click', e => {
+    placeElmBtn.addEventListener('click', function(e) {
         if (renderer.xr.isPresenting) {
             if (mainModel && !elmPlaced) {
                 mainModel.visible = true;
@@ -113,7 +113,7 @@ function init() {
     var ratio = calculateRatio(treeScale, 100);
     scaleFactorTest.textContent = ratio;
 
-    scaleSlider.addEventListener('input', e => {
+    scaleSlider.addEventListener('input', function(e) {
         treeScale = e.target.value;
         ratio = calculateRatio(e.target.value, 100);
 
@@ -153,19 +153,19 @@ async function onSessionStarted(session) {
 
     // A 'local' reference space has a native origin that is located
     // near the viewer's position at the time the session was created.
-    referenceSpace = await currentSession.requestReferenceSpace("local-floor").catch(e => {
+    referenceSpace = await currentSession.requestReferenceSpace("local-floor").catch(function(e) {
         console.log(e)
     });
 
     // Create another XRReferenceSpace that has the viewer as the origin.
-    const viewerSpace = await currentSession.requestReferenceSpace('viewer').catch(e => {
+    const viewerSpace = await currentSession.requestReferenceSpace('viewer').catch(function(e) {
         console.log(e)
     });
 
     // Perform hit testing using the viewer as origin.
     hitTestSource = await currentSession.requestHitTestSource({
         space: viewerSpace
-    }).catch(e => {
+    }).catch(function(e) {
         console.log(e)
     });
 
@@ -257,7 +257,7 @@ function render(time, frame) {
 }
 
 function loadBaseModel() {
-    plyLoader.load('dist/models/base.ply', obj => {
+    plyLoader.load('dist/models/base.ply', function(obj) {
         baseModel = obj.clone();
         baseModel.center();
         baseModel.rotateX(THREE.Math.degToRad(-90));

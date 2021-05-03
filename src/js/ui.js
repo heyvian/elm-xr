@@ -42,6 +42,6 @@ function togglePanel() {
     }
 }
 
-togglePanelBtn.addEventListener('click', e => {
+togglePanelBtn.addEventListener('click', function() {
     togglePanel();
 });
